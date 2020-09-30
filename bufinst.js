@@ -1,4 +1,4 @@
-const bufc = {
+const bufinst = {
   _tdict: {
     t_id: {},
     id_t: {},
@@ -51,7 +51,7 @@ const bufc = {
     },
 
     array: (type, header) => {
-      header = header || bufc.T.uint8;
+      header = header || bufinst.T.uint8;
       return {
         fluid: true,
         size: type.fluid ? (data) => header.size() + data.reduce((acc, elem) => acc + type.size(elem), 0) : (data) => header.size() + data.length * type.size(data[0]),
@@ -63,8 +63,8 @@ const bufc = {
       };
     },
     string: (type, header) => {
-      type = type || bufc.T.uint8;
-      header = header || bufc.T.uint8;
+      type = type || bufinst.T.uint8;
+      header = header || bufinst.T.uint8;
       return {
         fluid: true,
         size: (data) => header.size() + data.length * type.size(),
@@ -109,62 +109,62 @@ const bufc = {
     enum: (...values) => {
       return {
         size: () => 1,
-        read: (c) => values[bufc.T.uint8.read(c)],
-        write: (c, data) => bufc.T.uint8.write(c, values.indexOf(data)),
+        read: (c) => values[bufinst.T.uint8.read(c)],
+        write: (c, data) => bufinst.T.uint8.write(c, values.indexOf(data)),
       };
     },
     time: {
       size: () => 9,
       read: (c) => {
         let res = new Date();
-        res.setFullYear(bufc.T.uint16.read(c));
-        res.setMonth(bufc.T.uint8.read(c));
-        res.setDate(bufc.T.uint8.read(c));
-        res.setHours(bufc.T.uint8.read(c));
-        res.setMinutes(bufc.T.uint8.read(c));
-        res.setSeconds(bufc.T.uint8.read(c));
-        res.setMilliseconds(bufc.T.uint16.read(c));
+        res.setFullYear(bufinst.T.uint16.read(c));
+        res.setMonth(bufinst.T.uint8.read(c));
+        res.setDate(bufinst.T.uint8.read(c));
+        res.setHours(bufinst.T.uint8.read(c));
+        res.setMinutes(bufinst.T.uint8.read(c));
+        res.setSeconds(bufinst.T.uint8.read(c));
+        res.setMilliseconds(bufinst.T.uint16.read(c));
         return res;
       },
       write: (c, date) => {
-        bufc.T.uint16.write(c, date.getFullYear());
-        bufc.T.uint8.write(c, date.getMonth());
-        bufc.T.uint8.write(c, date.getDate());
-        bufc.T.uint8.write(c, date.getHours());
-        bufc.T.uint8.write(c, date.getMinutes());
-        bufc.T.uint8.write(c, date.getSeconds());
-        bufc.T.uint16.write(c, date.getMilliseconds());
+        bufinst.T.uint16.write(c, date.getFullYear());
+        bufinst.T.uint8.write(c, date.getMonth());
+        bufinst.T.uint8.write(c, date.getDate());
+        bufinst.T.uint8.write(c, date.getHours());
+        bufinst.T.uint8.write(c, date.getMinutes());
+        bufinst.T.uint8.write(c, date.getSeconds());
+        bufinst.T.uint16.write(c, date.getMilliseconds());
       },
     },
     any: {
       fluid: true,
-      size: (data) => 1 + bufc.T[bufc.typeFit(data)].size(data),
-      read: (c) => bufc.T[bufc._tdict.id_t[bufc.T.uint8.read(c)]].read(c),
+      size: (data) => 1 + bufinst.T[bufinst.typeFit(data)].size(data),
+      read: (c) => bufinst.T[bufinst._tdict.id_t[bufinst.T.uint8.read(c)]].read(c),
       write: (c, data) => {
-        let type = bufc.typeFit(data);
-        bufc.T.uint8.write(c, bufc._tdict.t_id[type]);
-        bufc.T[type].write(c, data);
+        let type = bufinst.typeFit(data);
+        bufinst.T.uint8.write(c, bufinst._tdict.t_id[type]);
+        bufinst.T[type].write(c, data);
       },
     },
     object: {
-      size: (data) => 1 + Object.keys(data).reduce((acc, key) => acc + bufc.T.string8_8.size(key) + bufc.T.any.size(data[key]), 0),
+      size: (data) => 1 + Object.keys(data).reduce((acc, key) => acc + bufinst.T.string8_8.size(key) + bufinst.T.any.size(data[key]), 0),
       read: (c) => {
         let res = {};
-        let length = bufc.T.uint8.read(c);
-        for (let i = 0; i < length; i++) res[bufc.T.string8_8.read(c)] = bufc.T.any.read(c);
+        let length = bufinst.T.uint8.read(c);
+        for (let i = 0; i < length; i++) res[bufinst.T.string8_8.read(c)] = bufinst.T.any.read(c);
         return res;
       },
       write: (c, data) => {
         let keys = Object.keys(data);
-        bufc.T.uint8.write(c, keys.length);
+        bufinst.T.uint8.write(c, keys.length);
         for (let key of keys) {
-          bufc.T.string8_8.write(c, key);
-          bufc.T.any.write(c, data[key]);
+          bufinst.T.string8_8.write(c, key);
+          bufinst.T.any.write(c, data[key]);
         }
       },
     },
   },
-  typeFit: (v) => bufc._typeofFit[typeof v](v),
+  typeFit: (v) => bufinst._typeofFit[typeof v](v),
   _typeofFit: {
     boolean: () => "bool",
     number: (n) => {
@@ -192,21 +192,21 @@ const bufc = {
     },
   },
   buildType: (t) => {
-    if (!t) return bufc.T.any;
+    if (!t) return bufinst.T.any;
     if (typeof t === "function") return t();
     if (t.size && t.read && t.write) return t;
     if (t instanceof Array) {
-      if (t.length == 1) return bufc.T.array(bufc.buildType(t[0]));
-      else return bufc.T.tuple(...t.map((e) => bufc.buildType(e)));
+      if (t.length == 1) return bufinst.T.array(bufinst.buildType(t[0]));
+      else return bufinst.T.tuple(...t.map((e) => bufinst.buildType(e)));
     } else if (t instanceof Object) {
       let s = {};
-      for (let key in t) s[key] = bufc.buildType(t[key]);
-      return bufc.T.struct(s);
+      for (let key in t) s[key] = bufinst.buildType(t[key]);
+      return bufinst.T.struct(s);
     }
   },
   Model: class {
     constructor(type) {
-      this.type = bufc.buildType(type);
+      this.type = bufinst.buildType(type);
     }
     parse(bin) {
       const c = {
@@ -228,7 +228,7 @@ const bufc = {
   },
   Command: class {
     constructor(type, handler) {
-      this.type = bufc.buildType(type);
+      this.type = bufinst.buildType(type);
       this.handler = handler;
     }
     execute(c) {
@@ -236,7 +236,7 @@ const bufc = {
     }
   },
   Machine: class {
-    constructor(header = bufc.T.uint8) {
+    constructor(header = bufinst.T.uint8) {
       this.header = header;
       this.commands = {};
       this.packed = [];
@@ -272,25 +272,25 @@ const bufc = {
     }
   },
 };
-bufc.T.array8 = (type) => bufc.T.array(type, bufc.T.uint8);
-bufc.T.array16 = (type) => bufc.T.array(type, bufc.T.uint16);
-bufc.T.array32 = (type) => bufc.T.array(type, bufc.T.uint32);
+bufinst.T.array8 = (type) => bufinst.T.array(type, bufinst.T.uint8);
+bufinst.T.array16 = (type) => bufinst.T.array(type, bufinst.T.uint16);
+bufinst.T.array32 = (type) => bufinst.T.array(type, bufinst.T.uint32);
 
-bufc.T.string8_8 = bufc.T.string(bufc.T.uint8, bufc.T.uint8);
-bufc.T.string16_8 = bufc.T.string(bufc.T.uint8, bufc.T.uint16);
-bufc.T.string32_8 = bufc.T.string(bufc.T.uint8, bufc.T.uint32);
-bufc.T.string8_16 = bufc.T.string(bufc.T.uint16, bufc.T.uint8);
-bufc.T.string16_16 = bufc.T.string(bufc.T.uint16, bufc.T.uint16);
-bufc.T.string32_16 = bufc.T.string(bufc.T.uint16, bufc.T.uint32);
+bufinst.T.string8_8 = bufinst.T.string(bufinst.T.uint8, bufinst.T.uint8);
+bufinst.T.string16_8 = bufinst.T.string(bufinst.T.uint8, bufinst.T.uint16);
+bufinst.T.string32_8 = bufinst.T.string(bufinst.T.uint8, bufinst.T.uint32);
+bufinst.T.string8_16 = bufinst.T.string(bufinst.T.uint16, bufinst.T.uint8);
+bufinst.T.string16_16 = bufinst.T.string(bufinst.T.uint16, bufinst.T.uint16);
+bufinst.T.string32_16 = bufinst.T.string(bufinst.T.uint16, bufinst.T.uint32);
 
-bufc.T.list = (header) => bufc.T.array(bufc.T.any, header);
-bufc.T.list8 = bufc.T.array(bufc.T.any, bufc.T.uint8);
-bufc.T.list16 = bufc.T.array(bufc.T.any, bufc.T.uint16);
-bufc.T.list32 = bufc.T.array(bufc.T.any, bufc.T.uint32);
+bufinst.T.list = (header) => bufinst.T.array(bufinst.T.any, header);
+bufinst.T.list8 = bufinst.T.array(bufinst.T.any, bufinst.T.uint8);
+bufinst.T.list16 = bufinst.T.array(bufinst.T.any, bufinst.T.uint16);
+bufinst.T.list32 = bufinst.T.array(bufinst.T.any, bufinst.T.uint32);
 
-Object.keys(bufc.T).forEach((t, id) => {
-  bufc._tdict.id_t[id] = t;
-  bufc._tdict.t_id[t] = id;
+Object.keys(bufinst.T).forEach((t, id) => {
+  bufinst._tdict.id_t[id] = t;
+  bufinst._tdict.t_id[t] = id;
 });
 
-if (typeof module !== "undefined" && module.exports) module.exports = bufc;
+if (typeof module !== "undefined" && module.exports) module.exports = bufinst;
